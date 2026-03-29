@@ -67,6 +67,7 @@ export default function Dashboard() {
             onResolveAlert={data.resolveAlert}
             onMarkNotificationRead={data.markNotificationRead}
             userName={user.name}
+            onOpenMessages={() => setActiveTab('messages')}
           />
         )}
         {user.role === 'technician' && (

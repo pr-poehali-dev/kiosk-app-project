@@ -22,6 +22,7 @@ interface DispatcherPanelProps {
   onResolveAlert: (id: string, resolverName: string) => void;
   onMarkNotificationRead: (id: string) => void;
   userName: string;
+  onOpenMessages?: () => void;
 }
 
 function formatTimeAgo(date: Date): string {
@@ -70,30 +71,31 @@ const LEVEL_ICONS: Record<AlertLevel, { name: string; color: string }> = {
   critical: { name: "AlertOctagon", color: "text-red-500" },
 };
 
+const MAP_VEHICLES = [
+  { id: "V001", number: "412", route: "5", x: 22, y: 35, status: "ok", label: "Иванов А." },
+  { id: "V002", number: "318", route: "3", x: 45, y: 55, status: "ok", label: "Сидоров К." },
+  { id: "V003", number: "205", route: "7", x: 68, y: 28, status: "warning", label: "Петрова Н." },
+  { id: "V004", number: "511", route: "11", x: 30, y: 72, status: "critical", label: "Козлов Р." },
+  { id: "V005", number: "720", route: "9", x: 58, y: 68, status: "critical", label: "Белов Д." },
+  { id: "V006", number: "415", route: "5", x: 78, y: 45, status: "ok", label: "Новиков С." },
+  { id: "V007", number: "603", route: "9", x: 15, y: 60, status: "warning", label: "Фёдорова О." },
+];
+
 function OverviewView({
   stats,
-  alerts,
   messages,
+  drivers,
+  onOpenMessages,
 }: {
   stats: DashboardStats;
   alerts: Alert[];
   messages: DispatchMessage[];
+  drivers: DriverInfo[];
+  onOpenMessages?: () => void;
 }) {
-  const recentAlerts = useMemo(
-    () =>
-      [...alerts]
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 5),
-    [alerts]
-  );
-
-  const recentMessages = useMemo(
-    () =>
-      [...messages]
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 5),
-    [messages]
-  );
+  const [hoveredVehicle, setHoveredVehicle] = useState<string | null>(null);
+  const [miniInput, setMiniInput] = useState("");
+  const [miniDriver, setMiniDriver] = useState("");
 
   const statCards = [
     {
@@ -126,8 +128,52 @@ function OverviewView({
     },
   ];
 
+  const threads = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        driverId: string;
+        driverName: string;
+        vehicleNumber: string;
+        lastMessage: DispatchMessage;
+        unreadCount: number;
+      }
+    >();
+    const sorted = [...messages].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    for (const msg of sorted) {
+      const existing = map.get(msg.driverId);
+      const unread =
+        (existing?.unreadCount ?? 0) +
+        (msg.direction === "incoming" && !msg.read ? 1 : 0);
+      map.set(msg.driverId, {
+        driverId: msg.driverId,
+        driverName: msg.driverName,
+        vehicleNumber: msg.vehicleNumber,
+        lastMessage: msg,
+        unreadCount: unread,
+      });
+    }
+    return [...map.values()]
+      .sort(
+        (a, b) =>
+          new Date(b.lastMessage.timestamp).getTime() -
+          new Date(a.lastMessage.timestamp).getTime()
+      )
+      .slice(0, 5);
+  }, [messages]);
+
+  const totalUnread = threads.reduce((s, t) => s + t.unreadCount, 0);
+
+  const okCount = MAP_VEHICLES.filter((v) => v.status === "ok").length;
+  const warningCount = MAP_VEHICLES.filter((v) => v.status === "warning").length;
+  const criticalCount = MAP_VEHICLES.filter((v) => v.status === "critical").length;
+
+  const firstDriver = drivers[0];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="grid grid-cols-4 gap-4">
         {statCards.map((card) => (
           <div
@@ -145,79 +191,194 @@ function OverviewView({
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-card border border-border rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Icon name="AlertTriangle" className="w-4 h-4 text-red-500" />
-            <h3 className="text-sm font-semibold text-foreground">Последние тревоги</h3>
-          </div>
-          {recentAlerts.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">Нет тревог</p>
-          ) : (
-            <div className="space-y-2">
-              {recentAlerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border-l-[3px] ${LEVEL_BORDER[alert.level]} bg-muted/40`}
-                >
-                  <Icon
-                    name={ALERT_TYPE_ICONS[alert.type]}
-                    className={`w-4 h-4 shrink-0 ${LEVEL_ICONS[alert.level].color}`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {alert.driverName} — {ALERT_TYPE_LABELS[alert.type]}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground truncate">{alert.message}</p>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground shrink-0">
-                    {formatTimeAgo(alert.timestamp)}
-                  </span>
-                </div>
-              ))}
+      <div className="flex gap-4">
+        <div className="flex-1 bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Icon name="MapPin" className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">Карта транспорта</h3>
+              <span className="ml-1 text-xs text-muted-foreground">
+                {MAP_VEHICLES.length} ТС
+              </span>
             </div>
-          )}
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                Норма
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />
+                Внимание
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+                Критично
+              </span>
+            </div>
+          </div>
+
+          <div className="map-container h-72 relative">
+            <div className="map-grid" />
+
+            <div className="absolute h-px bg-white/10" style={{ top: "20%", left: 0, right: 0 }} />
+            <div className="absolute h-px bg-white/10" style={{ top: "45%", left: 0, right: 0 }} />
+            <div className="absolute h-px bg-white/10" style={{ top: "70%", left: 0, right: 0 }} />
+            <div className="absolute h-px bg-white/10" style={{ top: "88%", left: 0, right: 0 }} />
+            <div className="absolute w-px bg-white/10" style={{ left: "25%", top: 0, bottom: 0 }} />
+            <div className="absolute w-px bg-white/10" style={{ left: "50%", top: 0, bottom: 0 }} />
+            <div className="absolute w-px bg-white/10" style={{ left: "72%", top: 0, bottom: 0 }} />
+            <div className="absolute w-px bg-white/10" style={{ left: "88%", top: 0, bottom: 0 }} />
+
+            {MAP_VEHICLES.map((v) => (
+              <div
+                key={v.id}
+                className="absolute"
+                style={{
+                  left: `${v.x}%`,
+                  top: `${v.y}%`,
+                  transform: "translate(-50%, -50%)",
+                }}
+                onMouseEnter={() => setHoveredVehicle(v.id)}
+                onMouseLeave={() => setHoveredVehicle(null)}
+              >
+                <div className="relative">
+                  {(v.status === "ok" || v.status === "critical") && (
+                    <span
+                      className={`absolute inset-0 rounded-full ${
+                        v.status === "ok" ? "bg-green-500/40" : "bg-red-500/40"
+                      } animate-pulse scale-[2.2]`}
+                    />
+                  )}
+                  <div
+                    className={`w-4 h-4 rounded-full relative z-10 cursor-pointer ${
+                      v.status === "ok"
+                        ? "bg-green-500"
+                        : v.status === "warning"
+                        ? "bg-yellow-400"
+                        : "bg-red-500"
+                    }`}
+                  />
+                  {hoveredVehicle === v.id && (
+                    <div
+                      className={`absolute z-10 bg-white text-gray-900 text-[11px] rounded-lg px-2 py-1.5 shadow-lg whitespace-nowrap pointer-events-none ${
+                        v.x > 60 ? "right-5 top-0" : "left-5 top-0"
+                      }`}
+                    >
+                      Борт {v.number} | Маршрут {v.route} | {v.label}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="px-4 py-2.5 border-t border-border flex items-center gap-5 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" />
+              Норма ({okCount})
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 inline-block" />
+              Внимание ({warningCount})
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />
+              Критично ({criticalCount})
+            </span>
+            <span className="ml-auto text-[11px]">Всего ТС: {MAP_VEHICLES.length}</span>
+          </div>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Icon name="MessageSquare" className="w-4 h-4 text-blue-500" />
-            <h3 className="text-sm font-semibold text-foreground">Последние сообщения</h3>
+        <div className="w-80 shrink-0 bg-card border border-border rounded-2xl flex flex-col overflow-hidden">
+          <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+            <Icon name="MessageSquare" className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Сообщения</h3>
+            {totalUnread > 0 && (
+              <span className="ml-auto bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1">
+                {totalUnread}
+              </span>
+            )}
           </div>
-          {recentMessages.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">Нет сообщений</p>
-          ) : (
-            <div className="space-y-2">
-              {recentMessages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-muted/40"
+
+          <div className="flex-1 overflow-y-auto">
+            {threads.length === 0 ? (
+              <p className="text-sm text-muted-foreground p-4 text-center">Нет сообщений</p>
+            ) : (
+              threads.map((thread) => (
+                <button
+                  key={thread.driverId}
+                  onClick={onOpenMessages}
+                  className="w-full text-left px-4 py-3 border-b border-border hover:bg-muted/50 transition-colors"
                 >
-                  <Icon
-                    name={msg.direction === "incoming" ? "ArrowDownLeft" : "ArrowUpRight"}
-                    className={`w-4 h-4 shrink-0 ${msg.direction === "incoming" ? "text-blue-500" : "text-green-500"}`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {msg.driverName}
-                      <span className="text-muted-foreground font-normal"> #{msg.vehicleNumber}</span>
-                    </p>
-                    <p className="text-[11px] text-muted-foreground truncate">{msg.text}</p>
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                        thread.unreadCount > 0
+                          ? "bg-primary/20 text-primary"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {thread.driverName.charAt(0)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span
+                          className={`text-xs truncate ${
+                            thread.unreadCount > 0
+                              ? "font-bold text-foreground"
+                              : "font-medium text-foreground"
+                          }`}
+                        >
+                          {thread.driverName}
+                        </span>
+                        {thread.unreadCount > 0 && (
+                          <span className="w-2 h-2 rounded-full bg-primary shrink-0 ml-1" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          #{thread.vehicleNumber}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground truncate">
+                          — {thread.lastMessage.text}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {msg.type === "urgent" && (
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-500/15 text-red-500">
-                        СРОЧ
-                      </span>
-                    )}
-                    <span className="text-[10px] text-muted-foreground">
-                      {formatTimeAgo(msg.timestamp)}
-                    </span>
-                  </div>
-                </div>
+                </button>
+              ))
+            )}
+          </div>
+
+          <div className="border-t border-border px-3 py-2 flex items-center gap-2">
+            <select
+              value={miniDriver}
+              onChange={(e) => setMiniDriver(e.target.value)}
+              className="h-8 px-2 rounded-lg bg-muted text-foreground text-[11px] border-0 focus:outline-none shrink-0 max-w-[90px]"
+            >
+              <option value="">Водитель</option>
+              {drivers.slice(0, 10).map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name.split(" ")[0]}
+                </option>
               ))}
-            </div>
-          )}
+              {!firstDriver && <option value="demo">Демо</option>}
+            </select>
+            <input
+              type="text"
+              value={miniInput}
+              onChange={(e) => setMiniInput(e.target.value)}
+              placeholder="Сообщение..."
+              className="flex-1 h-8 px-2 rounded-lg bg-muted text-foreground text-xs placeholder:text-muted-foreground focus:outline-none min-w-0"
+            />
+            <button
+              disabled={!miniInput.trim() || !miniDriver}
+              onClick={() => setMiniInput("")}
+              className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+            >
+              <Icon name="Send" className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -237,7 +398,24 @@ function MessagesView({
 }) {
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
+  const [search, setSearch] = useState("");
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [voiceMessages, setVoiceMessages] = useState<
+    { id: string; driverId: string; duration: number; timestamp: Date }[]
+  >([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isRecording) {
+      setRecordingSeconds(0);
+      return;
+    }
+    const interval = setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
+    return () => clearInterval(interval);
+  }, [isRecording]);
 
   const threads = useMemo(() => {
     const map = new Map<
@@ -275,6 +453,17 @@ function MessagesView({
     );
   }, [messages]);
 
+  const filteredThreads = useMemo(() => {
+    if (!search.trim()) return threads;
+    const q = search.toLowerCase();
+    return threads.filter(
+      (t) =>
+        t.driverName.toLowerCase().includes(q) ||
+        t.vehicleNumber.toLowerCase().includes(q) ||
+        t.routeNumber.toLowerCase().includes(q)
+    );
+  }, [threads, search]);
+
   const conversation = useMemo(() => {
     if (!selectedDriverId) return [];
     return [...messages]
@@ -286,7 +475,7 @@ function MessagesView({
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [conversation.length]);
+  }, [conversation.length, voiceMessages.length]);
 
   useEffect(() => {
     if (selectedDriverId) {
@@ -300,21 +489,96 @@ function MessagesView({
     if (!selectedDriverId || !newMessage.trim()) return;
     onSendMessage(selectedDriverId, newMessage.trim());
     setNewMessage("");
+    setReplyTo(null);
+  };
+
+  const handleVoice = () => {
+    if (isRecording) {
+      setIsRecording(false);
+      if (selectedDriverId) {
+        setVoiceMessages((prev) => [
+          ...prev,
+          {
+            id: `vm-${Date.now()}`,
+            driverId: selectedDriverId,
+            duration: recordingSeconds,
+            timestamp: new Date(),
+          },
+        ]);
+      }
+      setRecordingSeconds(0);
+    } else {
+      setIsRecording(true);
+    }
   };
 
   const selectedThread = threads.find((t) => t.driverId === selectedDriverId);
 
+  const selectedDriver = drivers.find((d) => d.id === selectedDriverId);
+
+  const formatMsgTime = (date: Date) => {
+    const d = new Date(date);
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  };
+
+  const formatDuration = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${String(sec).padStart(2, "0")}`;
+  };
+
+  const driverStatusOnline =
+    selectedDriver?.status === "on_shift" || selectedDriver?.status === "break";
+
+  const convVoiceMessages = voiceMessages.filter(
+    (vm) => vm.driverId === selectedDriverId
+  );
+
+  type ChatItem =
+    | { kind: "msg"; msg: DispatchMessage }
+    | { kind: "voice"; vm: { id: string; driverId: string; duration: number; timestamp: Date } };
+
+  const chatItems: ChatItem[] = [
+    ...conversation.map((msg) => ({ kind: "msg" as const, msg })),
+    ...convVoiceMessages.map((vm) => ({ kind: "voice" as const, vm })),
+  ].sort((a, b) => {
+    const ta =
+      a.kind === "msg"
+        ? new Date(a.msg.timestamp).getTime()
+        : new Date(a.vm.timestamp).getTime();
+    const tb =
+      b.kind === "msg"
+        ? new Date(b.msg.timestamp).getTime()
+        : new Date(b.vm.timestamp).getTime();
+    return ta - tb;
+  });
+
   return (
-    <div className="flex h-full gap-4">
-      <div className="w-80 shrink-0 bg-card border border-border rounded-2xl flex flex-col overflow-hidden">
-        <div className="px-4 py-3 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground">Диалоги</h3>
+    <div className="h-[calc(100vh-7rem)] flex gap-0 bg-card border border-border rounded-2xl overflow-hidden">
+      <div className="w-72 shrink-0 border-r border-border flex flex-col">
+        <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-foreground flex-1">Чаты</h3>
+          <button
+            onClick={() => setShowNewChat(true)}
+            className="text-[11px] font-medium px-2.5 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            + Новый чат
+          </button>
+        </div>
+        <div className="px-3 py-2 border-b border-border">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Поиск..."
+            className="w-full h-8 px-3 rounded-lg bg-muted text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
+          />
         </div>
         <div className="flex-1 overflow-y-auto">
-          {threads.length === 0 ? (
+          {filteredThreads.length === 0 ? (
             <p className="text-sm text-muted-foreground p-4 text-center">Нет сообщений</p>
           ) : (
-            threads.map((thread) => (
+            filteredThreads.map((thread) => (
               <button
                 key={thread.driverId}
                 onClick={() => setSelectedDriverId(thread.driverId)}
@@ -324,54 +588,68 @@ function MessagesView({
                     : "hover:bg-muted/50"
                 }`}
               >
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="text-sm font-medium text-foreground truncate">
-                    {thread.driverName}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
-                    {formatTimeAgo(thread.lastMessage.timestamp)}
-                  </span>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    {thread.driverName.charAt(0)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-xs font-medium text-foreground truncate">
+                        {thread.driverName}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
+                        {formatTimeAgo(thread.lastMessage.timestamp)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted-foreground truncate flex-1">
+                        {thread.lastMessage.direction === "outgoing" && (
+                          <span className="text-muted-foreground/60">Вы: </span>
+                        )}
+                        {thread.lastMessage.text}
+                      </span>
+                      {thread.unreadCount > 0 && (
+                        <span className="bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1 shrink-0 ml-1">
+                          {thread.unreadCount}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-muted-foreground">
-                    #{thread.vehicleNumber} / М{thread.routeNumber}
-                  </span>
-                  {thread.unreadCount > 0 && (
-                    <span className="bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1">
-                      {thread.unreadCount}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground truncate mt-1">
-                  {thread.lastMessage.direction === "outgoing" && (
-                    <span className="text-muted-foreground/60">Вы: </span>
-                  )}
-                  {thread.lastMessage.text}
-                </p>
               </button>
             ))
           )}
         </div>
       </div>
 
-      <div className="flex-1 bg-card border border-border rounded-2xl flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {!selectedDriverId ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <Icon name="MessageSquare" className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Выберите диалог</p>
+              <p className="text-sm text-muted-foreground">Выберите чат</p>
             </div>
           </div>
         ) : (
           <>
             <div className="px-4 py-3 border-b border-border flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
                 {selectedThread?.driverName.charAt(0) ?? "?"}
               </div>
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  {selectedThread?.driverName}
-                </p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-foreground">
+                    {selectedThread?.driverName}
+                  </p>
+                  <span
+                    className={`w-2 h-2 rounded-full shrink-0 ${
+                      driverStatusOnline ? "bg-green-500" : "bg-muted-foreground/40"
+                    }`}
+                  />
+                  <span className="text-[10px] text-muted-foreground">
+                    {driverStatusOnline ? "онлайн" : "офлайн"}
+                  </span>
+                </div>
                 <p className="text-[11px] text-muted-foreground">
                   #{selectedThread?.vehicleNumber} / Маршрут {selectedThread?.routeNumber}
                 </p>
@@ -379,47 +657,120 @@ function MessagesView({
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-              {conversation.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${msg.direction === "outgoing" ? "justify-end" : "justify-start"}`}
-                >
+              {chatItems.map((item) => {
+                if (item.kind === "voice") {
+                  return (
+                    <div key={item.vm.id} className="flex justify-end">
+                      <div className="bg-primary/15 rounded-xl px-3 py-2 flex items-center gap-3 max-w-[200px]">
+                        <Icon name="Mic" className="w-4 h-4 text-primary shrink-0" />
+                        <div>
+                          <p className="text-xs font-medium text-foreground">Голосовое сообщение</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {formatDuration(item.vm.duration)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                const msg = item.msg;
+                return (
                   <div
-                    className={`max-w-[70%] px-3.5 py-2 rounded-2xl text-sm ${
-                      msg.direction === "outgoing"
-                        ? "bg-primary text-primary-foreground rounded-br-md"
-                        : "bg-muted text-foreground rounded-bl-md"
-                    }`}
+                    key={msg.id}
+                    className={`flex ${msg.direction === "outgoing" ? "justify-end" : "justify-start"} group`}
                   >
-                    <p>{msg.text}</p>
-                    <p
-                      className={`text-[10px] mt-1 ${
-                        msg.direction === "outgoing"
-                          ? "text-primary-foreground/60"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      {formatTimeAgo(msg.timestamp)}
-                    </p>
+                    <div className="relative">
+                      <div
+                        className={`max-w-[70%] px-3.5 py-2 rounded-2xl text-sm ${
+                          msg.direction === "outgoing"
+                            ? "bg-primary text-primary-foreground rounded-tr-sm"
+                            : "bg-muted text-foreground rounded-tl-sm"
+                        }`}
+                      >
+                        <p>{msg.text}</p>
+                        <div
+                          className={`flex items-center gap-1 mt-1 ${
+                            msg.direction === "outgoing" ? "justify-end" : "justify-start"
+                          }`}
+                        >
+                          <span
+                            className={`text-[10px] ${
+                              msg.direction === "outgoing"
+                                ? "text-primary-foreground/60"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            {formatMsgTime(msg.timestamp)}
+                          </span>
+                          {msg.direction === "outgoing" && (
+                            <Icon
+                              name={msg.type === "urgent" ? "CheckCheck" : "Check"}
+                              className={`w-3 h-3 ${
+                                msg.type === "urgent"
+                                  ? "text-green-400"
+                                  : "text-primary-foreground/50"
+                              }`}
+                            />
+                          )}
+                        </div>
+                      </div>
+                      {msg.direction === "incoming" && (
+                        <button
+                          onClick={() => setReplyTo(msg.text)}
+                          className="absolute -right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded flex items-center justify-center bg-muted hover:bg-muted/80"
+                        >
+                          <Icon name="Quote" className="w-3 h-3 text-muted-foreground" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <div ref={chatEndRef} />
             </div>
 
             <div className="px-4 py-3 border-t border-border">
+              {replyTo && (
+                <div className="bg-muted rounded-lg px-3 py-1.5 mb-2 text-xs flex items-center gap-2">
+                  <Icon name="Quote" className="w-3 h-3 text-muted-foreground shrink-0" />
+                  <span className="truncate flex-1 text-muted-foreground">{replyTo}</span>
+                  <button
+                    onClick={() => setReplyTo(null)}
+                    className="shrink-0 text-muted-foreground hover:text-foreground"
+                  >
+                    <Icon name="X" className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+              {isRecording && (
+                <div className="flex items-center gap-2 text-xs text-red-500 animate-pulse mb-2">
+                  <span>●</span>
+                  <span>Запись... {recordingSeconds}с</span>
+                </div>
+              )}
               <div className="flex items-center gap-2">
+                <button
+                  onClick={handleVoice}
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors shrink-0 ${
+                    isRecording
+                      ? "bg-red-500/20 text-red-500"
+                      : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                  }`}
+                >
+                  <Icon name={isRecording ? "MicOff" : "Mic"} className="w-4 h-4" />
+                </button>
                 <input
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                  placeholder="Написать сообщение..."
-                  className="flex-1 h-10 px-3 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
+                  placeholder={isRecording ? "Идёт запись..." : "Написать сообщение..."}
+                  disabled={isRecording}
+                  className="flex-1 h-10 px-3 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-colors disabled:opacity-50"
                 />
                 <button
                   onClick={handleSend}
-                  disabled={!newMessage.trim()}
+                  disabled={!newMessage.trim() || isRecording}
                   className="h-10 w-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
                 >
                   <Icon name="Send" className="w-4 h-4" />
@@ -429,6 +780,61 @@ function MessagesView({
           </>
         )}
       </div>
+
+      {showNewChat && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-card border border-border rounded-2xl p-5 w-96 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-foreground">Новый чат с водителем</h3>
+              <button
+                onClick={() => setShowNewChat(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Icon name="X" className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-1.5 max-h-72 overflow-y-auto">
+              {drivers.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => {
+                    setSelectedDriverId(d.id);
+                    setShowNewChat(false);
+                  }}
+                  className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    {d.name.charAt(0)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground truncate">{d.name}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      #{d.vehicleNumber} / Маршрут {d.routeNumber}
+                    </p>
+                  </div>
+                  <span
+                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                      d.status === "on_shift"
+                        ? "bg-green-500/15 text-green-600"
+                        : d.status === "break"
+                        ? "bg-yellow-500/15 text-yellow-600"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {d.status === "on_shift"
+                      ? "На смене"
+                      : d.status === "break"
+                      ? "Перерыв"
+                      : d.status === "off_shift"
+                      ? "Выходной"
+                      : "Больн."}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -693,9 +1099,18 @@ export default function DispatcherPanel({
   onResolveAlert,
   onMarkNotificationRead,
   userName,
+  onOpenMessages,
 }: DispatcherPanelProps) {
   if (tab === "overview") {
-    return <OverviewView stats={stats} alerts={alerts} messages={messages} />;
+    return (
+      <OverviewView
+        stats={stats}
+        alerts={alerts}
+        messages={messages}
+        drivers={drivers}
+        onOpenMessages={onOpenMessages}
+      />
+    );
   }
   if (tab === "messages") {
     return (

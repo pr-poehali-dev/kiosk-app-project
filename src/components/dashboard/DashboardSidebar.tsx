@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Icon from "@/components/ui/icon";
 import type { DashboardUser, DashboardTab, UserRole } from "@/types/dashboard";
 
@@ -58,41 +59,70 @@ export default function DashboardSidebar({
   getRoleName,
   counts,
 }: DashboardSidebarProps) {
+  const [collapsed, setCollapsed] = useState(false);
   const navItems = NAV_BY_ROLE[user.role];
 
   return (
     <div
-      className="w-64 h-full flex flex-col shrink-0"
+      className="h-full flex flex-col shrink-0 transition-all duration-300"
       style={{
+        width: collapsed ? "60px" : "240px",
         backgroundColor: "hsl(var(--sidebar-background))",
         color: "hsl(var(--sidebar-foreground))",
       }}
     >
-      <div className="px-5 pt-6 pb-4">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "hsl(var(--sidebar-primary) / 0.15)" }}>
-            <Icon name="TramFront" className="w-5 h-5" style={{ color: "hsl(var(--sidebar-primary))" }} />
+      {/* Header */}
+      <div className={`flex items-center pt-4 pb-3 px-3 ${collapsed ? "justify-center" : "justify-between"}`}
+        style={{ borderBottom: "1px solid hsl(var(--sidebar-border))" }}
+      >
+        {!collapsed && (
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+              style={{ backgroundColor: "hsl(var(--sidebar-primary) / 0.15)" }}>
+              <Icon name="TramFront" className="w-4 h-4" style={{ color: "hsl(var(--sidebar-primary))" }} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold leading-tight truncate">ТрамДиспетч</p>
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${ROLE_BADGE_COLORS[user.role]}`}>
+                {getRoleName(user.role)}
+              </span>
+            </div>
           </div>
-          <div>
-            <h1 className="text-base font-bold leading-tight">ТрамДиспетч</h1>
-            <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded mt-0.5 ${ROLE_BADGE_COLORS[user.role]}`}>
-              {getRoleName(user.role)}
-            </span>
-          </div>
-        </div>
+        )}
+        <button
+          onClick={() => setCollapsed((c) => !c)}
+          className="w-8 h-8 rounded-lg flex items-center justify-center hover:opacity-80 transition-opacity shrink-0"
+          style={{ backgroundColor: "hsl(var(--sidebar-accent))" }}
+          title={collapsed ? "Развернуть меню" : "Свернуть меню"}
+        >
+          <Icon name={collapsed ? "PanelLeftOpen" : "PanelLeftClose"} className="w-4 h-4" />
+        </button>
+      </div>
 
-        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ backgroundColor: "hsl(var(--sidebar-accent))" }}>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+      {/* User info */}
+      {!collapsed && (
+        <div className="mx-3 mt-3 mb-1 flex items-center gap-2.5 px-3 py-2 rounded-lg"
+          style={{ backgroundColor: "hsl(var(--sidebar-accent))" }}>
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
             {user.name.charAt(0)}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium truncate">{user.name}</p>
-            <p className="text-[11px] opacity-50 truncate">{user.id}</p>
+            <p className="text-xs font-medium truncate">{user.name}</p>
+            <p className="text-[10px] opacity-50 truncate">{user.id}</p>
           </div>
         </div>
-      </div>
+      )}
+      {collapsed && (
+        <div className="flex justify-center mt-3 mb-1">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold"
+            title={user.name}>
+            {user.name.charAt(0)}
+          </div>
+        </div>
+      )}
 
-      <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
+      {/* Nav */}
+      <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = activeTab === item.tab;
           const count = counts?.[item.tab];
@@ -100,26 +130,24 @@ export default function DashboardSidebar({
             <button
               key={item.tab}
               onClick={() => onTabChange(item.tab)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative ${
-                isActive
-                  ? "text-white"
-                  : "opacity-70 hover:opacity-100"
-              }`}
-              style={
-                isActive
-                  ? { backgroundColor: "hsl(var(--sidebar-primary))" }
-                  : undefined
-              }
-              onMouseEnter={(e) => {
-                if (!isActive) e.currentTarget.style.backgroundColor = "hsl(var(--sidebar-accent))";
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) e.currentTarget.style.backgroundColor = "transparent";
-              }}
+              title={collapsed ? item.label : undefined}
+              className={`w-full flex items-center rounded-lg text-sm font-medium transition-colors relative
+                ${collapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2"}
+                ${isActive ? "text-white" : "opacity-70 hover:opacity-100"}`}
+              style={isActive ? { backgroundColor: "hsl(var(--sidebar-primary))" } : undefined}
+              onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = "hsl(var(--sidebar-accent))"; }}
+              onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = "transparent"; }}
             >
-              <Icon name={item.icon} className="w-[18px] h-[18px] shrink-0" />
-              <span className="truncate">{item.label}</span>
-              {count != null && count > 0 && (
+              <span className="relative shrink-0">
+                <Icon name={item.icon} className="w-[18px] h-[18px]" />
+                {collapsed && count != null && count > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold min-w-[14px] h-[14px] rounded-full flex items-center justify-center px-0.5 leading-none">
+                    {count > 9 ? "9+" : count}
+                  </span>
+                )}
+              </span>
+              {!collapsed && <span className="truncate">{item.label}</span>}
+              {!collapsed && count != null && count > 0 && (
                 <span className="ml-auto bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1">
                   {count > 99 ? "99+" : count}
                 </span>
@@ -129,19 +157,18 @@ export default function DashboardSidebar({
         })}
       </nav>
 
-      <div className="px-3 pb-4 pt-2" style={{ borderTop: "1px solid hsl(var(--sidebar-border))" }}>
+      {/* Logout */}
+      <div className="px-2 pb-4 pt-2" style={{ borderTop: "1px solid hsl(var(--sidebar-border))" }}>
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium opacity-70 hover:opacity-100 transition-colors"
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "hsl(var(--sidebar-accent))";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
-          }}
+          title={collapsed ? "Выйти" : undefined}
+          className={`w-full flex items-center rounded-lg text-sm font-medium opacity-70 hover:opacity-100 transition-colors
+            ${collapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2"}`}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "hsl(var(--sidebar-accent))"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
         >
           <Icon name="LogOut" className="w-[18px] h-[18px] shrink-0" />
-          <span>Выйти</span>
+          {!collapsed && <span>Выйти</span>}
         </button>
       </div>
     </div>
