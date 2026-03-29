@@ -96,6 +96,7 @@ function OverviewView({
   const [hoveredVehicle, setHoveredVehicle] = useState<string | null>(null);
   const [miniInput, setMiniInput] = useState("");
   const [miniDriver, setMiniDriver] = useState("");
+  const [miniSelectedThread, setMiniSelectedThread] = useState<string | null>(null);
 
   const statCards = [
     {
@@ -170,8 +171,6 @@ function OverviewView({
   const warningCount = MAP_VEHICLES.filter((v) => v.status === "warning").length;
   const criticalCount = MAP_VEHICLES.filter((v) => v.status === "critical").length;
 
-  const firstDriver = drivers[0];
-
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-4 gap-4">
@@ -191,193 +190,135 @@ function OverviewView({
         ))}
       </div>
 
-      <div className="flex gap-4">
-        <div className="flex-1 bg-card border border-border rounded-2xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Icon name="MapPin" className="w-4 h-4 text-primary" />
-              <h3 className="text-sm font-semibold text-foreground">Карта транспорта</h3>
-              <span className="ml-1 text-xs text-muted-foreground">
-                {MAP_VEHICLES.length} ТС
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
-                Норма
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />
-                Внимание
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
-                Критично
-              </span>
-            </div>
+      {/* MAP — full width */}
+      <div className="bg-card border border-border rounded-2xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Icon name="MapPin" className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Карта транспорта</h3>
+            <span className="ml-1 text-xs text-muted-foreground">{MAP_VEHICLES.length} ТС</span>
           </div>
-
-          <div className="map-container h-72 relative">
-            <div className="map-grid" />
-
-            <div className="absolute h-px bg-white/10" style={{ top: "20%", left: 0, right: 0 }} />
-            <div className="absolute h-px bg-white/10" style={{ top: "45%", left: 0, right: 0 }} />
-            <div className="absolute h-px bg-white/10" style={{ top: "70%", left: 0, right: 0 }} />
-            <div className="absolute h-px bg-white/10" style={{ top: "88%", left: 0, right: 0 }} />
-            <div className="absolute w-px bg-white/10" style={{ left: "25%", top: 0, bottom: 0 }} />
-            <div className="absolute w-px bg-white/10" style={{ left: "50%", top: 0, bottom: 0 }} />
-            <div className="absolute w-px bg-white/10" style={{ left: "72%", top: 0, bottom: 0 }} />
-            <div className="absolute w-px bg-white/10" style={{ left: "88%", top: 0, bottom: 0 }} />
-
-            {MAP_VEHICLES.map((v) => (
-              <div
-                key={v.id}
-                className="absolute"
-                style={{
-                  left: `${v.x}%`,
-                  top: `${v.y}%`,
-                  transform: "translate(-50%, -50%)",
-                }}
-                onMouseEnter={() => setHoveredVehicle(v.id)}
-                onMouseLeave={() => setHoveredVehicle(null)}
-              >
-                <div className="relative">
-                  {(v.status === "ok" || v.status === "critical") && (
-                    <span
-                      className={`absolute inset-0 rounded-full ${
-                        v.status === "ok" ? "bg-green-500/40" : "bg-red-500/40"
-                      } animate-pulse scale-[2.2]`}
-                    />
-                  )}
-                  <div
-                    className={`w-4 h-4 rounded-full relative z-10 cursor-pointer ${
-                      v.status === "ok"
-                        ? "bg-green-500"
-                        : v.status === "warning"
-                        ? "bg-yellow-400"
-                        : "bg-red-500"
-                    }`}
-                  />
-                  {hoveredVehicle === v.id && (
-                    <div
-                      className={`absolute z-10 bg-white text-gray-900 text-[11px] rounded-lg px-2 py-1.5 shadow-lg whitespace-nowrap pointer-events-none ${
-                        v.x > 60 ? "right-5 top-0" : "left-5 top-0"
-                      }`}
-                    >
-                      Борт {v.number} | Маршрут {v.route} | {v.label}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="px-4 py-2.5 border-t border-border flex items-center gap-5 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" />
-              Норма ({okCount})
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 inline-block" />
-              Внимание ({warningCount})
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />
-              Критично ({criticalCount})
-            </span>
-            <span className="ml-auto text-[11px]">Всего ТС: {MAP_VEHICLES.length}</span>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" />Норма ({okCount})</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />Внимание ({warningCount})</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500 inline-block" />Критично ({criticalCount})</span>
           </div>
         </div>
+        <div className="map-container h-64 relative">
+          <div className="map-grid" />
+          <div className="absolute h-px bg-white/10" style={{ top: "20%", left: 0, right: 0 }} />
+          <div className="absolute h-px bg-white/10" style={{ top: "45%", left: 0, right: 0 }} />
+          <div className="absolute h-px bg-white/10" style={{ top: "70%", left: 0, right: 0 }} />
+          <div className="absolute h-px bg-white/10" style={{ top: "88%", left: 0, right: 0 }} />
+          <div className="absolute w-px bg-white/10" style={{ left: "25%", top: 0, bottom: 0 }} />
+          <div className="absolute w-px bg-white/10" style={{ left: "50%", top: 0, bottom: 0 }} />
+          <div className="absolute w-px bg-white/10" style={{ left: "72%", top: 0, bottom: 0 }} />
+          <div className="absolute w-px bg-white/10" style={{ left: "88%", top: 0, bottom: 0 }} />
+          {MAP_VEHICLES.map((v) => (
+            <div key={v.id} className="absolute" style={{ left: `${v.x}%`, top: `${v.y}%`, transform: "translate(-50%, -50%)" }}
+              onMouseEnter={() => setHoveredVehicle(v.id)} onMouseLeave={() => setHoveredVehicle(null)}>
+              <div className="relative">
+                {(v.status === "ok" || v.status === "critical") && (
+                  <span className={`absolute inset-0 rounded-full ${v.status === "ok" ? "bg-green-500/40" : "bg-red-500/40"} animate-pulse scale-[2.2]`} />
+                )}
+                <div className={`w-4 h-4 rounded-full relative z-10 cursor-pointer ${v.status === "ok" ? "bg-green-500" : v.status === "warning" ? "bg-yellow-400" : "bg-red-500"}`} />
+                {hoveredVehicle === v.id && (
+                  <div className={`absolute z-10 bg-white text-gray-900 text-[11px] rounded-lg px-2 py-1.5 shadow-lg whitespace-nowrap pointer-events-none ${v.x > 60 ? "right-5 top-0" : "left-5 top-0"}`}>
+                    <span className="font-bold">Борт {v.number}</span> · М{v.route} · {v.label}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
-        <div className="w-80 shrink-0 bg-card border border-border rounded-2xl flex flex-col overflow-hidden">
-          <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-            <Icon name="MessageSquare" className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Сообщения</h3>
-            {totalUnread > 0 && (
-              <span className="ml-auto bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1">
-                {totalUnread}
-              </span>
-            )}
-          </div>
-
-          <div className="flex-1 overflow-y-auto">
+      {/* MINI MESSENGER — below the map */}
+      <div className="bg-card border border-border rounded-2xl overflow-hidden flex flex-col">
+        <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+          <Icon name="MessageSquare" className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Сообщения</h3>
+          {totalUnread > 0 && (
+            <span className="ml-1 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1">
+              {totalUnread}
+            </span>
+          )}
+          <button onClick={onOpenMessages} className="ml-auto text-[11px] text-primary hover:underline font-medium">
+            Открыть все →
+          </button>
+        </div>
+        <div className="flex">
+          {/* thread list */}
+          <div className="w-64 shrink-0 border-r border-border overflow-y-auto max-h-48">
             {threads.length === 0 ? (
-              <p className="text-sm text-muted-foreground p-4 text-center">Нет сообщений</p>
+              <p className="text-sm text-muted-foreground p-4 text-center">Нет чатов</p>
             ) : (
               threads.map((thread) => (
                 <button
                   key={thread.driverId}
-                  onClick={onOpenMessages}
-                  className="w-full text-left px-4 py-3 border-b border-border hover:bg-muted/50 transition-colors"
+                  onClick={() => setMiniSelectedThread(thread.driverId)}
+                  className={`w-full text-left px-3 py-2.5 border-b border-border transition-colors ${miniSelectedThread === thread.driverId ? "bg-primary/10" : "hover:bg-muted/50"}`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                        thread.unreadCount > 0
-                          ? "bg-primary/20 text-primary"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {thread.driverName.charAt(0)}
+                  <div className="flex items-start gap-2">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5 ${thread.unreadCount > 0 ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+                      {thread.vehicleNumber.slice(-2)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span
-                          className={`text-xs truncate ${
-                            thread.unreadCount > 0
-                              ? "font-bold text-foreground"
-                              : "font-medium text-foreground"
-                          }`}
-                        >
-                          {thread.driverName}
-                        </span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-foreground">#{thread.vehicleNumber}</span>
                         {thread.unreadCount > 0 && (
-                          <span className="w-2 h-2 rounded-full bg-primary shrink-0 ml-1" />
+                          <span className="bg-red-500 text-white text-[9px] font-bold min-w-[15px] h-[15px] rounded-full flex items-center justify-center px-0.5 shrink-0">{thread.unreadCount}</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-[10px] text-muted-foreground shrink-0">
-                          #{thread.vehicleNumber}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground truncate">
-                          — {thread.lastMessage.text}
-                        </span>
-                      </div>
+                      <p className="text-[10px] text-primary font-medium">М{thread.lastMessage.routeNumber}</p>
+                      <p className="text-[10px] text-muted-foreground font-light truncate">{thread.driverName}</p>
                     </div>
                   </div>
                 </button>
               ))
             )}
           </div>
-
-          <div className="border-t border-border px-3 py-2 flex items-center gap-2">
-            <select
-              value={miniDriver}
-              onChange={(e) => setMiniDriver(e.target.value)}
-              className="h-8 px-2 rounded-lg bg-muted text-foreground text-[11px] border-0 focus:outline-none shrink-0 max-w-[90px]"
-            >
-              <option value="">Водитель</option>
-              {drivers.slice(0, 10).map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name.split(" ")[0]}
-                </option>
-              ))}
-              {!firstDriver && <option value="demo">Демо</option>}
-            </select>
-            <input
-              type="text"
-              value={miniInput}
-              onChange={(e) => setMiniInput(e.target.value)}
-              placeholder="Сообщение..."
-              className="flex-1 h-8 px-2 rounded-lg bg-muted text-foreground text-xs placeholder:text-muted-foreground focus:outline-none min-w-0"
-            />
-            <button
-              disabled={!miniInput.trim() || !miniDriver}
-              onClick={() => setMiniInput("")}
-              className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
-            >
-              <Icon name="Send" className="w-3.5 h-3.5" />
-            </button>
+          {/* quick reply */}
+          <div className="flex-1 flex flex-col justify-between px-3 py-2.5 min-h-[12rem]">
+            {miniSelectedThread ? (
+              <>
+                <div className="flex-1 overflow-y-auto space-y-1.5 mb-2 max-h-24">
+                  {messages
+                    .filter((m) => m.driverId === miniSelectedThread)
+                    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                    .slice(0, 3)
+                    .reverse()
+                    .map((m) => (
+                      <div key={m.id} className={`flex ${m.direction === "outgoing" ? "justify-end" : "justify-start"}`}>
+                        <div className={`max-w-[80%] px-2.5 py-1.5 rounded-xl text-[11px] ${m.direction === "outgoing" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
+                          {m.text}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={miniInput}
+                    onChange={(e) => setMiniInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && miniInput.trim()) setMiniInput(""); }}
+                    placeholder="Ответить..."
+                    className="flex-1 h-8 px-2.5 rounded-lg bg-muted text-foreground text-xs placeholder:text-muted-foreground focus:outline-none min-w-0"
+                  />
+                  <button
+                    disabled={!miniInput.trim()}
+                    onClick={() => setMiniInput("")}
+                    className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 disabled:opacity-40 transition-colors shrink-0"
+                  >
+                    <Icon name="Send" className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <p className="text-xs text-muted-foreground">Выберите чат слева</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -553,243 +494,240 @@ function MessagesView({
     return ta - tb;
   });
 
+  const QUICK_REPLIES = [
+    "Принято, выполняю",
+    "Задержка на маршруте",
+    "Подтвердите остановку",
+    "Выезжайте на маршрут",
+    "Возвращайтесь в депо",
+    "Свяжитесь с диспетчером",
+  ];
+
   return (
-    <div className="h-[calc(100vh-7rem)] flex gap-0 bg-card border border-border rounded-2xl overflow-hidden">
-      <div className="w-72 shrink-0 border-r border-border flex flex-col">
-        <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-foreground flex-1">Чаты</h3>
+    <div className="h-[calc(100vh-7rem)] flex gap-4 bg-transparent">
+      {/* LEFT: Chat area */}
+      <div className="flex-1 flex flex-col bg-card border border-border rounded-2xl overflow-hidden min-w-0">
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-border flex items-center gap-2 shrink-0">
+          <h3 className="text-sm font-semibold text-foreground flex-1">
+            {selectedDriverId && selectedThread ? (
+              <span className="flex items-center gap-2">
+                <span className="font-bold">Борт #{selectedThread.vehicleNumber}</span>
+                <span className="text-primary font-medium text-xs">М{selectedThread.routeNumber}</span>
+                <span className="text-muted-foreground font-light text-xs">{selectedThread.driverName}</span>
+                <span className={`w-2 h-2 rounded-full shrink-0 ${driverStatusOnline ? "bg-green-500" : "bg-muted-foreground/40"}`} />
+              </span>
+            ) : (
+              "Мессенджер"
+            )}
+          </h3>
           <button
             onClick={() => setShowNewChat(true)}
-            className="text-[11px] font-medium px-2.5 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="text-[11px] font-medium px-2.5 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
           >
             + Новый чат
           </button>
         </div>
-        <div className="px-3 py-2 border-b border-border">
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+          {!selectedDriverId ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center">
+                <Icon name="MessageSquare" className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">Выберите борт из списка справа</p>
+              </div>
+            </div>
+          ) : (
+            chatItems.map((item) => {
+              if (item.kind === "voice") {
+                return (
+                  <div key={item.vm.id} className="flex justify-end">
+                    <div className="bg-primary/15 rounded-xl px-3 py-2 flex items-center gap-3 max-w-[220px]">
+                      <Icon name="Mic" className="w-4 h-4 text-primary shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-foreground">Голосовое</p>
+                        <p className="text-[10px] text-muted-foreground">{formatDuration(item.vm.duration)}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              const msg = item.msg;
+              return (
+                <div key={msg.id} className={`flex ${msg.direction === "outgoing" ? "justify-end" : "justify-start"} group`}>
+                  <div className="relative">
+                    <div className={`max-w-[75%] px-3.5 py-2 rounded-2xl text-sm ${msg.direction === "outgoing" ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted text-foreground rounded-tl-sm"}`}>
+                      <p>{msg.text}</p>
+                      <div className={`flex items-center gap-1 mt-1 ${msg.direction === "outgoing" ? "justify-end" : "justify-start"}`}>
+                        <span className={`text-[10px] ${msg.direction === "outgoing" ? "text-primary-foreground/60" : "text-muted-foreground"}`}>{formatMsgTime(msg.timestamp)}</span>
+                        {msg.direction === "outgoing" && (
+                          <Icon name={msg.type === "urgent" ? "CheckCheck" : "Check"} className={`w-3 h-3 ${msg.type === "urgent" ? "text-green-400" : "text-primary-foreground/50"}`} />
+                        )}
+                      </div>
+                    </div>
+                    {msg.direction === "incoming" && (
+                      <button onClick={() => setReplyTo(msg.text)} className="absolute -right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded flex items-center justify-center bg-muted hover:bg-muted/80">
+                        <Icon name="Quote" className="w-3 h-3 text-muted-foreground" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Quick replies */}
+        {selectedDriverId && (
+          <div className="px-4 py-2 border-t border-border flex flex-wrap gap-1.5 shrink-0">
+            {QUICK_REPLIES.map((qr) => (
+              <button
+                key={qr}
+                onClick={() => { onSendMessage(selectedDriverId, qr); }}
+                className="text-[11px] px-2.5 py-1 rounded-lg bg-muted hover:bg-primary/10 hover:text-primary text-muted-foreground transition-colors border border-border"
+              >
+                {qr}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Input */}
+        <div className="px-4 py-3 border-t border-border shrink-0">
+          {replyTo && (
+            <div className="bg-muted rounded-lg px-3 py-1.5 mb-2 text-xs flex items-center gap-2">
+              <Icon name="Quote" className="w-3 h-3 text-muted-foreground shrink-0" />
+              <span className="truncate flex-1 text-muted-foreground">{replyTo}</span>
+              <button onClick={() => setReplyTo(null)} className="shrink-0 text-muted-foreground hover:text-foreground">
+                <Icon name="X" className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+          {isRecording && (
+            <div className="flex items-center gap-2 text-xs text-red-500 animate-pulse mb-2">
+              <span>●</span><span>Запись... {recordingSeconds}с</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleVoice}
+              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors shrink-0 ${isRecording ? "bg-red-500/20 text-red-500" : "bg-muted hover:bg-muted/80 text-muted-foreground"}`}
+            >
+              <Icon name={isRecording ? "MicOff" : "Mic"} className="w-4 h-4" />
+            </button>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              placeholder={isRecording ? "Идёт запись..." : selectedDriverId ? "Написать сообщение..." : "Выберите борт..."}
+              disabled={isRecording || !selectedDriverId}
+              className="flex-1 h-10 px-3 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-colors disabled:opacity-50"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!newMessage.trim() || isRecording || !selectedDriverId}
+              className="h-10 w-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+            >
+              <Icon name="Send" className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT: Vehicle list */}
+      <div className="w-64 shrink-0 bg-card border border-border rounded-2xl flex flex-col overflow-hidden">
+        <div className="px-4 py-3 border-b border-border flex items-center gap-2 shrink-0">
+          <Icon name="Bus" className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground flex-1">Транспорт</h3>
+          <span className="text-xs text-muted-foreground">{drivers.length} ТС</span>
+        </div>
+        <div className="px-3 py-2 border-b border-border shrink-0">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Поиск..."
+            placeholder="Борт / маршрут / ФИО..."
             className="w-full h-8 px-3 rounded-lg bg-muted text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
         </div>
         <div className="flex-1 overflow-y-auto">
-          {filteredThreads.length === 0 ? (
-            <p className="text-sm text-muted-foreground p-4 text-center">Нет сообщений</p>
-          ) : (
-            filteredThreads.map((thread) => (
+          {filteredThreads.length > 0 && (
+            <div className="px-3 py-1.5 text-[10px] text-muted-foreground font-medium uppercase tracking-wide border-b border-border">
+              Активные чаты
+            </div>
+          )}
+          {filteredThreads.map((thread) => (
+            <button
+              key={thread.driverId}
+              onClick={() => setSelectedDriverId(thread.driverId)}
+              className={`w-full text-left px-3 py-2.5 border-b border-border transition-colors ${selectedDriverId === thread.driverId ? "bg-primary/10" : "hover:bg-muted/50"}`}
+            >
+              <div className="flex items-start gap-2.5">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 ${selectedDriverId === thread.driverId ? "bg-primary text-primary-foreground" : thread.unreadCount > 0 ? "bg-red-500/15 text-red-500" : "bg-muted text-muted-foreground"}`}>
+                  {thread.vehicleNumber.slice(-3)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground">#{thread.vehicleNumber}</span>
+                    {thread.unreadCount > 0 && (
+                      <span className="bg-red-500 text-white text-[9px] font-bold min-w-[15px] h-[15px] rounded-full flex items-center justify-center px-0.5 shrink-0">{thread.unreadCount}</span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-primary font-semibold">М{thread.routeNumber}</p>
+                  <p className="text-[10px] text-muted-foreground font-light truncate">{thread.driverName}</p>
+                </div>
+              </div>
+            </button>
+          ))}
+
+          {drivers.length > 0 && (
+            <div className="px-3 py-1.5 text-[10px] text-muted-foreground font-medium uppercase tracking-wide border-b border-border mt-1">
+              Все водители
+            </div>
+          )}
+          {drivers
+            .filter((d) => !filteredThreads.find((t) => t.driverId === d.id))
+            .map((d) => (
               <button
-                key={thread.driverId}
-                onClick={() => setSelectedDriverId(thread.driverId)}
-                className={`w-full text-left px-4 py-3 border-b border-border transition-colors ${
-                  selectedDriverId === thread.driverId
-                    ? "bg-primary/10"
-                    : "hover:bg-muted/50"
-                }`}
+                key={d.id}
+                onClick={() => setSelectedDriverId(d.id)}
+                className={`w-full text-left px-3 py-2.5 border-b border-border transition-colors ${selectedDriverId === d.id ? "bg-primary/10" : "hover:bg-muted/50"}`}
               >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                    {thread.driverName.charAt(0)}
+                <div className="flex items-start gap-2.5">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 ${
+                    d.status === "on_shift" ? "bg-green-500/15 text-green-600"
+                    : d.status === "break" ? "bg-yellow-500/15 text-yellow-600"
+                    : "bg-muted text-muted-foreground"
+                  }`}>
+                    {d.vehicleNumber.slice(-3)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-medium text-foreground truncate">
-                        {thread.driverName}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
-                        {formatTimeAgo(thread.lastMessage.timestamp)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-muted-foreground truncate flex-1">
-                        {thread.lastMessage.direction === "outgoing" && (
-                          <span className="text-muted-foreground/60">Вы: </span>
-                        )}
-                        {thread.lastMessage.text}
-                      </span>
-                      {thread.unreadCount > 0 && (
-                        <span className="bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1 shrink-0 ml-1">
-                          {thread.unreadCount}
-                        </span>
-                      )}
-                    </div>
+                    <span className="text-xs font-bold text-foreground">#{d.vehicleNumber}</span>
+                    <p className="text-[11px] text-primary font-semibold">М{d.routeNumber}</p>
+                    <p className="text-[10px] text-muted-foreground font-light truncate">{d.name}</p>
                   </div>
-                </div>
-              </button>
-            ))
-          )}
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {!selectedDriverId ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <Icon name="MessageSquare" className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Выберите чат</p>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="px-4 py-3 border-b border-border flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                {selectedThread?.driverName.charAt(0) ?? "?"}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-foreground">
-                    {selectedThread?.driverName}
-                  </p>
-                  <span
-                    className={`w-2 h-2 rounded-full shrink-0 ${
-                      driverStatusOnline ? "bg-green-500" : "bg-muted-foreground/40"
-                    }`}
-                  />
-                  <span className="text-[10px] text-muted-foreground">
-                    {driverStatusOnline ? "онлайн" : "офлайн"}
+                  <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full shrink-0 mt-0.5 ${
+                    d.status === "on_shift" ? "bg-green-500/15 text-green-600"
+                    : d.status === "break" ? "bg-yellow-500/15 text-yellow-600"
+                    : "bg-muted text-muted-foreground"
+                  }`}>
+                    {d.status === "on_shift" ? "Смена" : d.status === "break" ? "Пер." : d.status === "off_shift" ? "Вых." : "Б/л"}
                   </span>
                 </div>
-                <p className="text-[11px] text-muted-foreground">
-                  #{selectedThread?.vehicleNumber} / Маршрут {selectedThread?.routeNumber}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-              {chatItems.map((item) => {
-                if (item.kind === "voice") {
-                  return (
-                    <div key={item.vm.id} className="flex justify-end">
-                      <div className="bg-primary/15 rounded-xl px-3 py-2 flex items-center gap-3 max-w-[200px]">
-                        <Icon name="Mic" className="w-4 h-4 text-primary shrink-0" />
-                        <div>
-                          <p className="text-xs font-medium text-foreground">Голосовое сообщение</p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {formatDuration(item.vm.duration)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-                const msg = item.msg;
-                return (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.direction === "outgoing" ? "justify-end" : "justify-start"} group`}
-                  >
-                    <div className="relative">
-                      <div
-                        className={`max-w-[70%] px-3.5 py-2 rounded-2xl text-sm ${
-                          msg.direction === "outgoing"
-                            ? "bg-primary text-primary-foreground rounded-tr-sm"
-                            : "bg-muted text-foreground rounded-tl-sm"
-                        }`}
-                      >
-                        <p>{msg.text}</p>
-                        <div
-                          className={`flex items-center gap-1 mt-1 ${
-                            msg.direction === "outgoing" ? "justify-end" : "justify-start"
-                          }`}
-                        >
-                          <span
-                            className={`text-[10px] ${
-                              msg.direction === "outgoing"
-                                ? "text-primary-foreground/60"
-                                : "text-muted-foreground"
-                            }`}
-                          >
-                            {formatMsgTime(msg.timestamp)}
-                          </span>
-                          {msg.direction === "outgoing" && (
-                            <Icon
-                              name={msg.type === "urgent" ? "CheckCheck" : "Check"}
-                              className={`w-3 h-3 ${
-                                msg.type === "urgent"
-                                  ? "text-green-400"
-                                  : "text-primary-foreground/50"
-                              }`}
-                            />
-                          )}
-                        </div>
-                      </div>
-                      {msg.direction === "incoming" && (
-                        <button
-                          onClick={() => setReplyTo(msg.text)}
-                          className="absolute -right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded flex items-center justify-center bg-muted hover:bg-muted/80"
-                        >
-                          <Icon name="Quote" className="w-3 h-3 text-muted-foreground" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-              <div ref={chatEndRef} />
-            </div>
-
-            <div className="px-4 py-3 border-t border-border">
-              {replyTo && (
-                <div className="bg-muted rounded-lg px-3 py-1.5 mb-2 text-xs flex items-center gap-2">
-                  <Icon name="Quote" className="w-3 h-3 text-muted-foreground shrink-0" />
-                  <span className="truncate flex-1 text-muted-foreground">{replyTo}</span>
-                  <button
-                    onClick={() => setReplyTo(null)}
-                    className="shrink-0 text-muted-foreground hover:text-foreground"
-                  >
-                    <Icon name="X" className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-              {isRecording && (
-                <div className="flex items-center gap-2 text-xs text-red-500 animate-pulse mb-2">
-                  <span>●</span>
-                  <span>Запись... {recordingSeconds}с</span>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleVoice}
-                  className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors shrink-0 ${
-                    isRecording
-                      ? "bg-red-500/20 text-red-500"
-                      : "bg-muted hover:bg-muted/80 text-muted-foreground"
-                  }`}
-                >
-                  <Icon name={isRecording ? "MicOff" : "Mic"} className="w-4 h-4" />
-                </button>
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                  placeholder={isRecording ? "Идёт запись..." : "Написать сообщение..."}
-                  disabled={isRecording}
-                  className="flex-1 h-10 px-3 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-colors disabled:opacity-50"
-                />
-                <button
-                  onClick={handleSend}
-                  disabled={!newMessage.trim() || isRecording}
-                  className="h-10 w-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
-                >
-                  <Icon name="Send" className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+              </button>
+            ))}
+        </div>
       </div>
 
       {showNewChat && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-card border border-border rounded-2xl p-5 w-96 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-foreground">Новый чат с водителем</h3>
-              <button
-                onClick={() => setShowNewChat(false)}
-                className="text-muted-foreground hover:text-foreground"
-              >
+              <h3 className="text-sm font-semibold text-foreground">Новый чат</h3>
+              <button onClick={() => setShowNewChat(false)} className="text-muted-foreground hover:text-foreground">
                 <Icon name="X" className="w-4 h-4" />
               </button>
             </div>
@@ -803,14 +741,13 @@ function MessagesView({
                   }}
                   className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                    {d.name.charAt(0)}
+                  <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-foreground text-xs font-bold shrink-0">
+                    {d.vehicleNumber.slice(-3)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">{d.name}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      #{d.vehicleNumber} / Маршрут {d.routeNumber}
-                    </p>
+                    <p className="text-sm font-bold text-foreground">#{d.vehicleNumber}</p>
+                    <p className="text-[11px] text-primary font-semibold">М{d.routeNumber}</p>
+                    <p className="text-[10px] text-muted-foreground font-light truncate">{d.name}</p>
                   </div>
                   <span
                     className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
@@ -821,13 +758,7 @@ function MessagesView({
                         : "bg-muted text-muted-foreground"
                     }`}
                   >
-                    {d.status === "on_shift"
-                      ? "На смене"
-                      : d.status === "break"
-                      ? "Перерыв"
-                      : d.status === "off_shift"
-                      ? "Выходной"
-                      : "Больн."}
+                    {d.status === "on_shift" ? "На смене" : d.status === "break" ? "Перерыв" : d.status === "off_shift" ? "Выходной" : "Больн."}
                   </span>
                 </button>
               ))}
