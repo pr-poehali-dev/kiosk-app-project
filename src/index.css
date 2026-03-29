@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Smooth theme transition for all color-bearing properties */
+* {
+  transition:
+    background-color 0.4s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+/* Exclude elements that should not animate (e.g. animations themselves) */
+.no-theme-transition,
+.no-theme-transition * {
+  transition: none !important;
+}
+
 @layer base {
   :root {
     /* MD3 Light Theme */
