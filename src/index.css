@@ -4,89 +4,92 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
+    /* MD3 Light Theme */
+    --background: 210 20% 96%;
+    --foreground: 215 28% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
+    --card-foreground: 215 28% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 215 28% 10%;
+    --primary: 213 94% 38%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 20% 92%;
+    --secondary-foreground: 215 28% 20%;
+    --muted: 210 20% 90%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 0 0% 10%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 10%;
+    --border: 214 31% 85%;
+    --input: 214 31% 85%;
+    --ring: 213 94% 38%;
+    --radius: 0.75rem;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Kiosk colors */
+    --kiosk-bg: 215 25% 93%;
+    --kiosk-surface: 0 0% 100%;
+    --kiosk-surface-variant: 210 20% 94%;
+    --kiosk-on-surface: 215 28% 10%;
+    --kiosk-header: 213 94% 18%;
+    --kiosk-header-text: 0 0% 100%;
+    --kiosk-accent: 38 92% 50%;
+    --kiosk-online: 142 71% 45%;
+    --kiosk-offline: 0 72% 51%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 215 25% 12%;
+    --sidebar-foreground: 210 20% 92%;
+    --sidebar-primary: 213 94% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 25% 20%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 215 25% 20%;
+    --sidebar-ring: 213 94% 60%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 215 28% 8%;
+    --foreground: 210 20% 95%;
+    --card: 215 28% 11%;
+    --card-foreground: 210 20% 95%;
+    --popover: 215 28% 11%;
+    --popover-foreground: 210 20% 95%;
+    --primary: 213 94% 65%;
+    --primary-foreground: 215 28% 8%;
+    --secondary: 215 25% 18%;
+    --secondary-foreground: 210 20% 90%;
+    --muted: 215 25% 18%;
+    --muted-foreground: 215 20% 60%;
+    --accent: 38 92% 55%;
+    --accent-foreground: 215 28% 8%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 25% 20%;
+    --input: 215 25% 20%;
+    --ring: 213 94% 65%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --kiosk-bg: 215 28% 6%;
+    --kiosk-surface: 215 28% 10%;
+    --kiosk-surface-variant: 215 25% 14%;
+    --kiosk-on-surface: 210 20% 95%;
+    --kiosk-header: 215 28% 5%;
+    --kiosk-header-text: 210 20% 95%;
+    --kiosk-accent: 38 92% 55%;
+    --kiosk-online: 142 71% 50%;
+    --kiosk-offline: 0 72% 55%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 215 28% 6%;
+    --sidebar-foreground: 210 20% 92%;
+    --sidebar-primary: 213 94% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 215 25% 16%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 215 25% 16%;
+    --sidebar-ring: 213 94% 65%;
   }
 }
 
@@ -95,7 +98,307 @@
     @apply border-border;
   }
 
+  html,
+  body,
+  #root {
+    @apply h-full overflow-hidden;
+    font-family: "Golos Text", "Rubik", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
   body {
     @apply bg-background text-foreground;
+    overscroll-behavior: none;
   }
+}
+
+/* MD3 Elevation shadows */
+@layer utilities {
+  .elevation-1 {
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.12),
+      0 1px 2px rgba(0, 0, 0, 0.14);
+  }
+  .elevation-2 {
+    box-shadow:
+      0 3px 6px rgba(0, 0, 0, 0.15),
+      0 2px 4px rgba(0, 0, 0, 0.12);
+  }
+  .elevation-3 {
+    box-shadow:
+      0 10px 20px rgba(0, 0, 0, 0.15),
+      0 3px 6px rgba(0, 0, 0, 0.1);
+  }
+  .elevation-4 {
+    box-shadow:
+      0 15px 25px rgba(0, 0, 0, 0.15),
+      0 5px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .kiosk-surface {
+    background-color: hsl(var(--kiosk-surface));
+  }
+  .kiosk-surface-variant {
+    background-color: hsl(var(--kiosk-surface-variant));
+  }
+  .kiosk-bg {
+    background-color: hsl(var(--kiosk-bg));
+  }
+  .kiosk-header {
+    background-color: hsl(var(--kiosk-header));
+    color: hsl(var(--kiosk-header-text));
+  }
+}
+
+/* Map placeholder styles */
+.map-container {
+  background: linear-gradient(135deg, #1a3a5c 0%, #0d2135 40%, #1a3a5c 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.map-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.map-route-line {
+  position: absolute;
+  width: 4px;
+  background: linear-gradient(180deg, #22c55e, #3b82f6, #f59e0b);
+  border-radius: 2px;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
+}
+
+/* Transport icon pulse animation */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes move-along {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-up {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-down {
+  from {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes scale-bounce {
+  0% {
+    transform: scale(0.8);
+  }
+  70% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+
+@keyframes blink-status {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.animate-slide-in-left {
+  animation: slide-in-left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.animate-slide-in-up {
+  animation: slide-in-up 0.3s ease-out forwards;
+}
+.animate-slide-in-down {
+  animation: slide-in-down 0.3s ease-out forwards;
+}
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out forwards;
+}
+.animate-scale-in {
+  animation: scale-in 0.25s ease-out forwards;
+}
+.animate-scale-bounce {
+  animation: scale-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+.animate-blink {
+  animation: blink-status 2s ease-in-out infinite;
+}
+.animate-move {
+  animation: move-along 3s ease-in-out infinite;
+}
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s ease-out infinite;
+}
+
+/* Scrollbar custom */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Ripple effect */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+.ripple::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.ripple:active::after {
+  opacity: 0.12;
+}
+
+/* Kiosk touch optimized */
+button,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Status indicator */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-online {
+  background-color: hsl(var(--kiosk-online));
+  box-shadow: 0 0 6px hsl(var(--kiosk-online));
+}
+.status-offline {
+  background-color: hsl(var(--kiosk-offline));
+}
+.status-warn {
+  background-color: hsl(38 92% 50%);
+  box-shadow: 0 0 6px hsl(38 92% 50%);
 }

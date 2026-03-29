@@ -1,0 +1,159 @@
+import { useState, useRef, useEffect } from 'react';
+import Icon from '@/components/ui/icon';
+import { Message } from '@/types/kiosk';
+
+const QUICK_TEMPLATES = [
+  '🚦 Задержка на светофоре',
+  '🔧 Техническая неисправность',
+  '👥 Большой пассажиропоток',
+  '✅ Прибыл на конечную',
+  '🛑 Экстренная остановка',
+  '⏰ Опоздание ~5 мин',
+  '🆗 Всё в норме',
+  '🔄 Прошу сменить маршрут',
+];
+
+interface Props {
+  messages: Message[];
+  onSend: (text: string) => void;
+  isMoving: boolean;
+}
+
+export default function Messenger({ messages, onSend, isMoving }: Props) {
+  const [input, setInput] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordTime, setRecordTime] = useState(0);
+  const recordTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatMessages = messages.filter(m => m.type === 'dispatcher' || m.type === 'important').slice(0, 30);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages.length]);
+
+  const handleSend = () => {
+    if (!input.trim()) return;
+    onSend(input.trim());
+    setInput('');
+  };
+
+  const handleTemplate = (tpl: string) => {
+    onSend(tpl);
+  };
+
+  const startRecord = () => {
+    setIsRecording(true);
+    setRecordTime(0);
+    recordTimer.current = setInterval(() => setRecordTime(t => t + 1), 1000);
+  };
+
+  const stopRecord = () => {
+    setIsRecording(false);
+    if (recordTimer.current) clearInterval(recordTimer.current);
+    onSend(`🎤 Голосовое сообщение (${recordTime}с)`);
+    setRecordTime(0);
+  };
+
+  const formatTime = (date: Date) =>
+    new Date(date).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Messages list */}
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-0">
+        {chatMessages.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
+            <Icon name="MessageSquare" size={32} className="opacity-30" />
+            <span className="text-sm">Нет сообщений</span>
+          </div>
+        )}
+        {[...chatMessages].reverse().map(msg => {
+          const isOutgoing = msg.text.startsWith('[Водитель]');
+          return (
+            <div key={msg.id} className={`flex ${isOutgoing ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[80%] rounded-2xl px-3 py-2 ${
+                msg.type === 'important'
+                  ? 'bg-destructive/15 border border-destructive/30 text-destructive-foreground'
+                  : isOutgoing
+                  ? 'bg-primary text-primary-foreground rounded-br-sm'
+                  : 'bg-muted text-foreground rounded-bl-sm'
+              }`}>
+                {msg.type === 'important' && (
+                  <div className="flex items-center gap-1 mb-1">
+                    <Icon name="AlertTriangle" size={12} className="text-destructive" />
+                    <span className="text-[10px] font-bold text-destructive uppercase">Важное</span>
+                  </div>
+                )}
+                <p className="text-xs leading-relaxed">{msg.text}</p>
+                <div className={`text-[9px] mt-1 ${isOutgoing ? 'text-primary-foreground/60 text-right' : 'text-muted-foreground'}`}>
+                  {formatTime(msg.timestamp)}
+                  {isOutgoing && <Icon name="CheckCheck" size={10} className="inline ml-1" />}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Quick templates */}
+      {(!isMoving || input.length === 0) ? (
+        <div className="px-3 py-1 border-t border-border">
+          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {QUICK_TEMPLATES.map((tpl, i) => (
+              <button
+                key={i}
+                onClick={() => handleTemplate(tpl)}
+                className="flex-shrink-0 px-2.5 py-1 rounded-full bg-muted hover:bg-primary hover:text-primary-foreground text-xs text-foreground transition-all whitespace-nowrap active:scale-95 ripple"
+              >
+                {tpl}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Input area */}
+      <div className="px-3 pb-2 pt-1 border-t border-border">
+        {isRecording ? (
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-destructive/10 border border-destructive/30">
+            <div className="w-3 h-3 rounded-full bg-destructive animate-pulse" />
+            <span className="text-sm text-destructive font-medium flex-1">
+              Запись... {recordTime}с
+            </span>
+            <button
+              onPointerUp={stopRecord}
+              className="px-3 py-1.5 rounded-lg bg-destructive text-white text-sm ripple"
+            >
+              Стоп
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSend()}
+              placeholder="Сообщение диспетчеру..."
+              className="flex-1 px-3 py-2.5 rounded-xl bg-muted border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+            />
+            <button
+              onPointerDown={startRecord}
+              className="w-10 h-10 rounded-xl bg-muted hover:bg-muted-foreground/20 flex items-center justify-center flex-shrink-0 active:bg-destructive/20 transition-all ripple"
+              title="Голосовое сообщение (удерживайте)"
+            >
+              <Icon name="Mic" size={18} className="text-muted-foreground" />
+            </button>
+            <button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0 disabled:opacity-40 active:scale-95 transition-all ripple elevation-1"
+            >
+              <Icon name="Send" size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
