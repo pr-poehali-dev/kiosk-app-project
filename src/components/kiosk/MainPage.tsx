@@ -57,7 +57,7 @@ export default function MainPage({
       <div className="flex items-center gap-2 flex-shrink-0 px-[15px] py-[15px]"
         style={{ backgroundColor: '#152d52', color: 'white' }}>
 
-        {/* LEFT: Menu + speed + connection + moving */}
+        {/* LEFT: Menu only */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
 
           {/* MENU — icon only, badge visible */}
@@ -65,42 +65,12 @@ export default function MainPage({
             className="relative w-11 h-11 rounded-2xl bg-white/15 hover:bg-white/25 flex items-center justify-center ripple active:scale-95 transition-all flex-shrink-0 elevation-2">
             <Icon name="Menu" size={22} className="text-white" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] rounded-full bg-destructive text-white text-[10px] font-black flex items-center justify-center px-1 border-2 border-kiosk-header elevation-2">
+              <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] rounded-full bg-destructive text-white text-[10px] font-black flex items-center justify-center px-1 border-2 elevation-2"
+                style={{ borderColor: '#152d52' }}>
                 {unreadCount}
               </span>
             )}
           </button>
-
-          {/* Speed */}
-          <div className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-white/10 min-w-[50px] flex-shrink-0">
-            <span className="text-white font-black tabular-nums text-xl leading-none">{Math.round(speed)}</span>
-            <span className="text-white/50 text-[9px] leading-none mt-0.5">км/ч</span>
-          </div>
-
-          {/* Connection */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/10 flex-shrink-0">
-            <div className={`status-dot ${connection === 'online' ? 'status-online' : 'status-offline'}`} />
-            <span className="text-white text-xs">{connection === 'online' ? 'Онлайн' : 'Оффлайн'}</span>
-          </div>
-
-          {/* Interval */}
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/10 flex-shrink-0">
-            <Icon name="Timer" size={13} className="text-white/60" />
-            <span className="text-white text-xs tabular-nums">{interval} мин</span>
-          </div>
-
-          {/* Deviation */}
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/10 flex-shrink-0">
-            <Icon name="Clock" size={13} className="text-white/60" />
-            <span className={`text-xs font-bold tabular-nums ${devColorClass}`}>{devSign}{deviation} мин</span>
-          </div>
-
-          {/* Moving */}
-          {isMoving && (
-            <div className="hidden md:flex items-center gap-1 px-2 py-1.5 rounded-xl bg-green-500/20 flex-shrink-0">
-              <Icon name="Navigation" size={13} className="text-green-400" />
-            </div>
-          )}
         </div>
 
         {/* RIGHT INFO PANEL */}
@@ -132,20 +102,26 @@ export default function MainPage({
             <span className="text-white font-bold text-sm leading-tight tabular-nums">{driver.vehicleNumber}</span>
           </div>
 
+          {/* Connection — moved to right */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/10 flex-shrink-0">
+            <div className={`status-dot ${connection === 'online' ? 'status-online' : 'status-offline'}`} />
+            <span className="text-white text-xs">{connection === 'online' ? 'Онлайн' : 'Оффлайн'}</span>
+          </div>
+
           <div className="w-px h-8 bg-white/20" />
 
-          {/* Break */}
+          {/* Break — icon only */}
           <button onClick={onBreak}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 font-medium text-xs ripple active:scale-95 transition-all">
-            <Icon name="Coffee" size={15} />
-            <span className="hidden md:inline">Перерыв</span>
+            className="w-10 h-10 rounded-xl bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 flex items-center justify-center ripple active:scale-95 transition-all"
+            title="Перерыв">
+            <Icon name="Coffee" size={17} />
           </button>
 
-          {/* End shift */}
+          {/* End shift — icon only */}
           <button onClick={onEndShift}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/15 border border-red-500/25 text-red-300 font-medium text-xs ripple active:scale-95 transition-all">
-            <Icon name="LogOut" size={15} />
-            <span className="hidden md:inline">Завершить</span>
+            className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/25 text-red-300 flex items-center justify-center ripple active:scale-95 transition-all"
+            title="Завершить смену">
+            <Icon name="LogOut" size={17} />
           </button>
 
           <div className="w-px h-8 bg-white/20" />
