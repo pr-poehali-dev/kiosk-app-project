@@ -57,27 +57,26 @@ export default function MainPage({
       <div className="flex items-center gap-2 flex-shrink-0 px-[15px] py-[15px]"
         style={{ backgroundColor: '#152d52', color: 'white' }}>
 
-        {/* LEFT: Menu only */}
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+        {/* LEFT: Menu + route info */}
+        <div className="flex items-center gap-3 flex-1 min-w-0">
 
-          {/* MENU — icon only, badge visible */}
-          <button onClick={onOpenMenu}
-            className="relative w-11 h-11 rounded-2xl bg-white/15 hover:bg-white/25 flex items-center justify-center ripple active:scale-95 transition-all flex-shrink-0 elevation-2">
-            <Icon name="Menu" size={22} className="text-white" />
+          {/* MENU — no bg, no border */}
+          <div className="relative flex-shrink-0">
+            <button onClick={onOpenMenu}
+              className="w-10 h-10 flex items-center justify-center ripple active:scale-95 transition-transform"
+              style={{ zIndex: 1 }}>
+              <Icon name="Menu" size={24} className="text-white" />
+            </button>
             {unreadCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] rounded-full bg-destructive text-white text-[10px] font-black flex items-center justify-center px-1 border-2 elevation-2"
-                style={{ borderColor: '#152d52' }}>
+              <span className="absolute -top-2 -right-2 min-w-[20px] h-[20px] rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center px-1 pointer-events-none"
+                style={{ zIndex: 10, boxShadow: '0 0 0 2px #152d52' }}>
                 {unreadCount}
               </span>
             )}
-          </button>
-        </div>
-
-        {/* RIGHT INFO PANEL */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+          </div>
 
           {/* Route + stops */}
-          <div className="flex items-center gap-3 px-3 py-1.5 rounded-xl bg-white/10">
+          <div className="flex items-center gap-3 px-3 py-1.5 rounded-xl bg-white/10 flex-shrink-0">
             <div className="flex flex-col items-center justify-center">
               <span className="text-white/50 text-[9px] leading-none">маршрут</span>
               <span className="text-white font-black text-2xl leading-none tabular-nums">№{driver.routeNumber}</span>
@@ -97,12 +96,16 @@ export default function MainPage({
           </div>
 
           {/* Vehicle number */}
-          <div className="flex flex-col items-center justify-center px-3 py-1.5 rounded-xl bg-white/10">
+          <div className="flex flex-col items-center justify-center px-3 py-1.5 rounded-xl bg-white/10 flex-shrink-0">
             <span className="text-white/50 text-[9px] leading-none">борт</span>
             <span className="text-white font-bold text-sm leading-tight tabular-nums">{driver.vehicleNumber}</span>
           </div>
+        </div>
 
-          {/* Connection — moved to right */}
+        {/* RIGHT: connection + theme + time + actions */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+
+          {/* Connection */}
           <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/10 flex-shrink-0">
             <div className={`status-dot ${connection === 'online' ? 'status-online' : 'status-offline'}`} />
             <span className="text-white text-xs">{connection === 'online' ? 'Онлайн' : 'Оффлайн'}</span>
@@ -110,23 +113,7 @@ export default function MainPage({
 
           <div className="w-px h-8 bg-white/20" />
 
-          {/* Break — icon only */}
-          <button onClick={onBreak}
-            className="w-10 h-10 rounded-xl bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 flex items-center justify-center ripple active:scale-95 transition-all"
-            title="Перерыв">
-            <Icon name="Coffee" size={17} />
-          </button>
-
-          {/* End shift — icon only */}
-          <button onClick={onEndShift}
-            className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/25 text-red-300 flex items-center justify-center ripple active:scale-95 transition-all"
-            title="Завершить смену">
-            <Icon name="LogOut" size={17} />
-          </button>
-
-          <div className="w-px h-8 bg-white/20" />
-
-          {/* Theme toggle — cycles light → dark → auto */}
+          {/* Theme toggle */}
           <button onClick={onToggleTheme}
             className="flex flex-col items-center justify-center w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 ripple active:scale-95 transition-all flex-shrink-0"
             title={theme === 'light' ? 'Светлая → Тёмная' : theme === 'dark' ? 'Тёмная → Авто' : 'Авто → Светлая'}>
@@ -145,6 +132,22 @@ export default function MainPage({
             <span className="text-white font-black tabular-nums text-xl leading-none">{timeStr}</span>
             <span className="text-white/50 text-[10px] capitalize leading-none mt-0.5">{dateStr}</span>
           </div>
+
+          <div className="w-px h-8 bg-white/20" />
+
+          {/* Break */}
+          <button onClick={onBreak}
+            className="w-10 h-10 rounded-xl bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 flex items-center justify-center ripple active:scale-95 transition-all"
+            title="Перерыв">
+            <Icon name="Coffee" size={17} />
+          </button>
+
+          {/* End shift */}
+          <button onClick={onEndShift}
+            className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/25 text-red-300 flex items-center justify-center ripple active:scale-95 transition-all"
+            title="Завершить смену">
+            <Icon name="LogOut" size={17} />
+          </button>
         </div>
       </div>
 
