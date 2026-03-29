@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Icon from '@/components/ui/icon';
 import { Driver, MenuSection, ThemeMode } from '@/types/kiosk';
 
@@ -344,6 +344,22 @@ function AdminSection() {
 export default function SidebarMenu({ isOpen, onClose, driver, unreadCount, activeSection, onSection, onLogout, logoTapCount, onLogoTap, theme, isDark, darkFrom, darkTo, onSetTheme, onSetDarkFrom, onSetDarkTo }: Props) {
   const [showAdmin, setShowAdmin] = useState(false);
   const [adminTapCount, setAdminTapCount] = useState(0);
+  const [overlayVisible, setOverlayVisible] = useState(false);
+  const [sectionVisible, setSectionVisible] = useState(false);
+  const prevSection = useRef<MenuSection | null>(null);
+
+  useEffect(() => {
+    if (isOpen) setOverlayVisible(true);
+    else { const t = setTimeout(() => setOverlayVisible(false), 350); return () => clearTimeout(t); }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (activeSection !== prevSection.current) {
+      setSectionVisible(false);
+      const t = setTimeout(() => { setSectionVisible(true); prevSection.current = activeSection; }, 30);
+      return () => clearTimeout(t);
+    }
+  }, [activeSection]);
 
   const handleAdminTap = () => {
     const next = adminTapCount + 1;
@@ -354,15 +370,22 @@ export default function SidebarMenu({ isOpen, onClose, driver, unreadCount, acti
 
   return (
     <>
-      {/* Overlay */}
-      {isOpen && (
-        <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+      {/* Overlay — always mounted, fades in/out */}
+      {overlayVisible && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+          style={{ transition: 'opacity 0.35s ease', opacity: isOpen ? 1 : 0 }}
+          onClick={onClose}
+        />
       )}
 
       {/* Sidebar */}
-      <div className={`fixed top-0 left-0 h-full z-50 w-80 max-w-[85vw] flex flex-col transition-transform duration-350 ease-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
-        style={{ background: 'hsl(var(--sidebar-background))' }}>
+      <div className={`fixed top-0 left-0 h-full z-50 w-80 max-w-[85vw] flex flex-col`}
+        style={{
+          background: 'hsl(var(--sidebar-background))',
+          transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}>
 
         {/* Header */}
         <div className="p-5 border-b border-sidebar-border bg-gradient-to-br from-primary/20 to-transparent">
@@ -395,34 +418,48 @@ export default function SidebarMenu({ isOpen, onClose, driver, unreadCount, acti
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
           {/* Nav items */}
-          {(!activeSection || !['profile','notifications','settings','archive','support','admin'].includes(activeSection)) && (
-            <nav className="p-3 space-y-1">
-              {MENU_ITEMS.map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => onSection(item.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all ripple
-                    ${activeSection === item.id ? 'bg-sidebar-primary/20 text-sidebar-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent'}`}
-                >
-                  <Icon name={item.icon} size={20} />
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">{item.label}</div>
-                    <div className="text-[11px] opacity-60">{item.desc}</div>
-                  </div>
-                  {item.id === 'notifications' && unreadCount > 0 && (
-                    <div className="w-5 h-5 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center">{unreadCount}</div>
-                  )}
-                  <Icon name="ChevronRight" size={14} className="opacity-40" />
-                </button>
-              ))}
-            </nav>
-          )}
+          <nav
+            className="p-3 space-y-1"
+            style={{
+              transform: activeSection ? 'translateX(-24px)' : 'translateX(0)',
+              opacity: activeSection ? 0 : 1,
+              transition: 'transform 0.25s ease, opacity 0.2s ease',
+              pointerEvents: activeSection ? 'none' : 'auto',
+            }}
+          >
+            {MENU_ITEMS.map(item => (
+              <button
+                key={item.id}
+                onClick={() => onSection(item.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all ripple
+                  ${activeSection === item.id ? 'bg-sidebar-primary/20 text-sidebar-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent'}`}
+              >
+                <Icon name={item.icon} size={20} />
+                <div className="flex-1">
+                  <div className="font-medium text-sm">{item.label}</div>
+                  <div className="text-[11px] opacity-60">{item.desc}</div>
+                </div>
+                {item.id === 'notifications' && unreadCount > 0 && (
+                  <div className="w-5 h-5 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center">{unreadCount}</div>
+                )}
+                <Icon name="ChevronRight" size={14} className="opacity-40" />
+              </button>
+            ))}
+          </nav>
 
           {/* Section content */}
           {activeSection && (
-            <div className="p-4">
+            <div
+              className="p-4 absolute top-0 left-0 w-full"
+              style={{
+                marginTop: '0',
+                transform: sectionVisible ? 'translateX(0)' : 'translateX(24px)',
+                opacity: sectionVisible ? 1 : 0,
+                transition: 'transform 0.25s ease, opacity 0.2s ease',
+              }}
+            >
               <button onClick={() => onSection(null as unknown as MenuSection)} className="flex items-center gap-2 text-sidebar-primary text-sm mb-4 ripple">
                 <Icon name="ChevronLeft" size={16} />
                 Назад
